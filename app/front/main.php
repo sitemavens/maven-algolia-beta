@@ -42,10 +42,10 @@ class Main {
 				wp_enqueue_script( 'algolia-helper', $registry->getFrontScriptsUrl() . "services/algolia-helper.js", array('mavenAlgoliaApp'), $registry->getPluginVersion() );
 				wp_enqueue_script( 'algolia-client', $registry->getFrontScriptsUrl() . "services/algolia-client.js", array('mavenAlgoliaApp'), $registry->getPluginVersion() );
 
-				wp_enqueue_style( 'bootstrap', $registry->getBowerComponentUrl() . "bootstrap/dist/css/bootstrap.css", null, $registry->getPluginVersion() );
-				wp_enqueue_style( 'bootstrap-theme', $registry->getBowerComponentUrl() . "bootstrap/dist/css/bootstrap-theme.css", null, $registry->getPluginVersion() );
+//				wp_enqueue_style( 'bootstrap', $registry->getBowerComponentUrl() . "bootstrap/dist/css/bootstrap.css", null, $registry->getPluginVersion() );
+//				wp_enqueue_style( 'bootstrap-theme', $registry->getBowerComponentUrl() . "bootstrap/dist/css/bootstrap-theme.css", null, $registry->getPluginVersion() );
 
-				wp_enqueue_style( 'main', $registry->getStylesUrl() . "main.css", array( 'bootstrap', 'bootstrap-theme' ), $registry->getPluginVersion() );
+//				wp_enqueue_style( 'main', $registry->getStylesUrl() . "main.css", array( 'bootstrap', 'bootstrap-theme' ), $registry->getPluginVersion() );
 			} else {
 				wp_enqueue_script( 'mavenAlgoliaApp', $registry->getScriptsUrl() . "main.min.js", 'angular', $registry->getPluginVersion() );
 				wp_enqueue_style( 'mainCss', $registry->getStylesUrl() . "main.min.css", array(), $registry->getPluginVersion() );
