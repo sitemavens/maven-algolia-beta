@@ -1,46 +1,40 @@
 var app = angular.module('mavenAlgolia.services');
 
-app.factory('AlgoliaHelper', ['$q', 'AlgoliaClient', function($q, AlgoliaClient) {
+app.factory('AlgoliaHelper', ['$q','$rootScope',  'AlgoliaClient', function($q,$rootScope, AlgoliaClient) {
 
 		var algoliaHelperInstance = {};
-		var deferred = $q.defer();
 		var helper = false;
-
+		var controllerScope;
+		
 		var searchCallback = function(success, content) {
-			if (success) {
-				algoliaHelperInstance.page = content.page;
-				algoliaHelperInstance.nbPages = content.nbPages;
-				algoliaHelperInstance.hitsPerPage = content.hitsPerPage;
-				algoliaHelperInstance.nbHits = content.nbHits;
-				algoliaHelperInstance.content = content;
-				console.log('memo');
-				deferred.resolve(content);
-			} else {
-				deferred.reject('Something went wrong!!!');
-			}
-		};
+				
+			$rootScope.$broadcast('algoliaResultUpdated', content);
+			
+			$rootScope.$apply();
 
+		};
+		
+		
+		
 		algoliaHelperInstance = {
 			indexName: '',
-			page: 0,
-			nbPages: 0,
-			hitsPerPage: 0,
-			nbHits: 0,
-			content: '',
 			options: {
 				hitsPerPage: 12,
-				facets: [],
+				facets: '',
 				numericFilters: ''
 			},
+			
 			get: function() {
 				if (!helper) {
-					helper = new AlgoliaSearchHelper(AlgoliaClient.get(), this.indexName, this.options);
+					helper = new AlgoliaSearchHelper(AlgoliaClient.get(), this.indexName);
 				}
 
 				return helper;
 			},
-			search: function(value, options) {
-
+			search: function(value, options, scope) {
+				
+				controllerScope = scope;
+				
 				if (!value) {
 					value = '';
 				}
@@ -58,9 +52,10 @@ app.factory('AlgoliaHelper', ['$q', 'AlgoliaClient', function($q, AlgoliaClient)
 						this.options.numericFilters = options.numericFilters;
 					}
 				}
+				
 				this.get().search(value, searchCallback, this.options);
-
-				return deferred.promise;
+				
+				//return deferred.promise;
 
 			}
 		};
