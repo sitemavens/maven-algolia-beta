@@ -1,0 +1,80 @@
+body {
+	background-color: transparent;
+}
+.container{
+	width: 100%;
+}
+
+/* Everything but the jumbotron gets side spacing for mobile first views */
+.header,
+.marketing,
+.footer {
+	padding-top: 20px;
+	padding-bottom: 20px;
+	padding-left: 15px;
+	padding-right: 15px;
+}
+
+/* Custom page header */
+.header {
+	border-bottom: 1px solid #e5e5e5;
+}
+/* Make the masthead heading the same height as the navigation */
+.header h3 {
+	margin-top: 0;
+	margin-bottom: 0;
+	line-height: 40px;
+	padding-bottom: 19px;
+}
+
+/* Custom page footer */
+.footer {
+	padding-top: 19px;
+	color: #777;
+	border-top: 1px solid #e5e5e5;
+}
+
+.container-narrow > hr {
+	margin: 30px 0;
+}
+
+
+/* Responsive: Portrait tablets and up */
+@media screen and (min-width: 768px) {
+	/* Remove the padding we set earlier */
+	.header,
+	.marketing,
+	.footer {
+		padding-left: 0;
+		padding-right: 0;
+	}
+	/* Space out the masthead */
+	.header {
+		//margin-bottom: 30px;
+	}
+
+}
+
+.ng-valid 		{  }
+.ng-invalid 	{  }
+.ng-pristine 	{  }
+.ng-dirty 		{  }
+
+/* really specific css rules applied by angular */
+.ng-invalid-required 		{  }
+.ng-invalid-minlength 		{  }
+.ng-valid-max-length 		{  }
+
+
+h4.options span{
+	margin-right: 5px;
+}
+
+#mvne_category-adder h4 {
+	font-size: 1em;
+}
+#titlediv #title-prompt-text {
+	font-family: "Open Sans",sans-serif;
+	font-weight: normal;
+	line-height: 1em;
+}
