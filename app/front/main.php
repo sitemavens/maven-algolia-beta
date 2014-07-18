@@ -56,7 +56,8 @@ class Main {
 				'ajaxUrl' => admin_url( 'admin-ajax.php' ),
 				'frontViewsUrl' => $registry->getFrontViewsUrl(),
 				'algoliaAppId' => 'W1RXWVXKIB',
-				'algoliaApiKey' => '19a56a603b66c79850a2a3ac6faf5ce6'
+				'algoliaApiKey' => '19a56a603b66c79850a2a3ac6faf5ce6',
+				'debug' => ( defined('MAVEN_DEBUG') && MAVEN_DEBUG )
 			) );
 		}
 	}
