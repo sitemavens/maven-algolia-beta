@@ -50,11 +50,11 @@ app.factory('AlgoliaHelper', ['$q','$rootScope', 'AlgoliaClient', 'MAConfig', fu
 				return helper;
 			},
 			search: function(value, options) {
-				algoliaHelperInstance.log('AlgoliaHelper:Instance:search');
+				this.log('AlgoliaHelper:Instance:search');
 				if (!value) {
 					value = '';
 				}
-
+				this.clearOptionsNumericFilters();
 				if (options) {
 					if (typeof (options.indexName) !== "undefined") {
 						this.indexName = options.indexName;
@@ -68,6 +68,7 @@ app.factory('AlgoliaHelper', ['$q','$rootScope', 'AlgoliaClient', 'MAConfig', fu
 						this.options.numericFilters = options.numericFilters;
 					}
 				}
+				this.prepareNumericFilters();
 				this.get().search(value, searchCallback, this.options);
 				
 				//return deferred.promise;
@@ -135,9 +136,27 @@ app.factory('AlgoliaHelper', ['$q','$rootScope', 'AlgoliaClient', 'MAConfig', fu
 			totalResults: function() {
 				return this.nbHits;
 			},
-			clearNumericFilters: function() {
+			clearOptionsNumericFilters: function() {
 				this.options.numericFilters = '';
+			},
+			clearNumericFilters: function() {
 				this.filters.numericFilters = new Array();
+			},
+			/**
+			 * 
+			 * Filters format is
+			 *		relation string AND | OR
+			 *		query array
+			 *				filterObjects object {'field': fieldName, 'value': fieldValue, 'compare': compareOperator}
+			 * ex: {relation: 'AND', query: [{'field': 'price', 'value': 10, 'compare': 'BEETWEEN'}, {'field': 'stock', 'value': 0, 'compare': '>'}]}
+			 * @param array filters It is an array of objects {relation: 'AND', query: filterObjectsArray}
+			 * @returns void
+			 */
+			setNumericFilters: function( filters ) {
+				if( !filters ){
+					filters = [];
+				}
+				this.filters.numericFilters = filters;
 			},
 			prepareNumericFilters: function(){
 				var _this = this;
@@ -149,7 +168,7 @@ app.factory('AlgoliaHelper', ['$q','$rootScope', 'AlgoliaClient', 'MAConfig', fu
 					angular.forEach(this.filters.numericFilters, function(value, key) {
 						// If it is the first filter we would use the query separator
 						// after first filter all queries should have a ","(comma) as separator
-						where = (key === 0) ? querySeparator : separator;
+						where += (key === 0) ? querySeparator : separator;
 						// "OR" comparison should be closed by brackets, so open it here
 						if( angular.isDefined(value.relation) && value.relation === 'OR' ){
 							where += '(';
