@@ -52,7 +52,7 @@ app.factory('AlgoliaHelper', ['$q','$rootScope', 'AlgoliaClient', 'MAConfig', fu
 			search: function(value, options) {
 				this.log('AlgoliaHelper:Instance:search');
 				if (!value) {
-					value = '';
+					value = null;
 				}
 				this.clearOptionsNumericFilters();
 				if (options) {
@@ -67,12 +67,31 @@ app.factory('AlgoliaHelper', ['$q','$rootScope', 'AlgoliaClient', 'MAConfig', fu
 					if (typeof (options.numericFilters) !== "undefined") {
 						this.options.numericFilters = options.numericFilters;
 					}
+
+					if (typeof (options.hitsPerPage) !== "undefined") {
+						this.options.hitsPerPage = options.hitsPerPage;
+					}
 				}
 				this.prepareNumericFilters();
-				this.get().search(value, searchCallback, this.options);
 				
-				//return deferred.promise;
-
+				this.get().search(value, searchCallback, this.options);
+			},
+			setIndex: function( index ) {
+				if( index ){
+					this.get().index = index;
+				}else{
+					this.log('AlgoliaHelper:Instance:setIndex - Empty index was passed');
+				}
+			},
+			sortByIndex: function( index, page ) {
+				this.log('AlgoliaHelper:Instance:sortByIndex');
+				if( index ){
+					var newPage = ( page > 0 ) ? page : 0;
+					this.setIndex( index );
+					this.get().gotoPage( newPage );
+				}else{
+					this.log('Empty sort index was passed');
+				}
 			},
 			setRangeSize: function(size){
 				if( size ){
