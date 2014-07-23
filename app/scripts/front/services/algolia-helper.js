@@ -27,11 +27,13 @@ app.factory('AlgoliaHelper', ['$q','$rootScope', 'AlgoliaClient', 'MAConfig', fu
 			nbPages: 0,
 			hitsPerPage: 0,
 			nbHits: 0,
-			filters: { numericFilters: [] },
+			numericFilters: [],
+			tagFilters: [],
 			options: {
 				hitsPerPage: 12,
 				facets: '',
-				numericFilters: ''
+				numericFilters: '',
+				tagFilters: ''
 			},
 			log: function( logTxt ){
 				if( this.debug() && angular.isDefined(console) ){
@@ -52,9 +54,8 @@ app.factory('AlgoliaHelper', ['$q','$rootScope', 'AlgoliaClient', 'MAConfig', fu
 			search: function(value, options) {
 				this.log('AlgoliaHelper:Instance:search');
 				if (!value) {
-					value = null;
+					value = '';
 				}
-				this.clearOptionsNumericFilters();
 				if (options) {
 					if (typeof (options.indexName) !== "undefined") {
 						this.indexName = options.indexName;
@@ -65,14 +66,20 @@ app.factory('AlgoliaHelper', ['$q','$rootScope', 'AlgoliaClient', 'MAConfig', fu
 					}
 
 					if (typeof (options.numericFilters) !== "undefined") {
-						this.options.numericFilters = options.numericFilters;
+						this.numericFilters = options.numericFilters;
+					}
+
+					if (typeof (options.tagFilters) !== "undefined") {
+						this.tagFilters = options.tagFilters;
 					}
 
 					if (typeof (options.hitsPerPage) !== "undefined") {
 						this.options.hitsPerPage = options.hitsPerPage;
 					}
 				}
-				this.prepareNumericFilters();
+				this.options.tagFilters = this.tagFilters;
+
+				this.options.numericFilters = this._getNumericFilters();
 				
 				this.get().search(value, searchCallback, this.options);
 			},
@@ -93,6 +100,12 @@ app.factory('AlgoliaHelper', ['$q','$rootScope', 'AlgoliaClient', 'MAConfig', fu
 					this.log('Empty sort index was passed');
 				}
 			},
+			
+			/**
+			 * Set the number of pages showed besides the current one
+			 * @param {int} size
+			 * @returns {void}
+			 */
 			setRangeSize: function(size){
 				if( size ){
 					this.rangeSize = size;
@@ -116,6 +129,10 @@ app.factory('AlgoliaHelper', ['$q','$rootScope', 'AlgoliaClient', 'MAConfig', fu
 				return (this.page < this.nbPages - this.rangeSize && this.nbPages > (this.rangeSize * 2) + 1);
 			},
 
+			/**
+			 * Get the array of pages numbers to show
+			 * @returns {Array}
+			 */
 			getPaginationRange: function() {
 				var ps = [];
 				var start, end, current;
@@ -142,100 +159,157 @@ app.factory('AlgoliaHelper', ['$q','$rootScope', 'AlgoliaClient', 'MAConfig', fu
 
 				return ps;
 			},
+			
+			/**
+			 * Get the page number to display, as algolia starts in 0 we need to increase the value in 1
+			 * @param {Number} page
+			 * @returns {Number}
+			 */
 			displayPageNum: function(page) {
 				// increment the page in 1 since algolia starts in 0
 				return page + 1;
 			},
+			
+			/**
+			 * Number of results where it starts
+			 * @returns {Number}
+			 */
 			displayingResultsFrom: function() {
 				return (this.hitsPerPage < this.nbHits ) ? ( (this.page === 0) ? 0 : this.hitsPerPage * this.page ) : this.nbHits;
 			},
+			
+			/**
+			 * Number of results where it ends
+			 * @returns {Number}
+			 */
 			displayingResultsTo: function() {
 				return (this.hitsPerPage < this.nbHits ) ? ( ( (this.hitsPerPage * this.page) + this.hitsPerPage) > this.nbHits ? this.nbHits : ( (this.hitsPerPage * this.page) + this.hitsPerPage) ) : this.nbHits;
 			},
+			
+			/**
+			 * Number of items in the result
+			 * @returns {Number}
+			 */
 			totalResults: function() {
 				return this.nbHits;
 			},
-			clearOptionsNumericFilters: function() {
-				this.options.numericFilters = '';
-			},
+			
+			/**
+			 * Clear numberic filters
+			 * @returns {void}
+			 */
 			clearNumericFilters: function() {
-				this.filters.numericFilters = new Array();
+				this.numericFilters = [];
 			},
 			/**
-			 * 
+			 * Add a numeric filter to the array of filters
 			 * Filters format is
-			 *		relation string AND | OR
-			 *		query array
-			 *				filterObjects object {'field': fieldName, 'value': fieldValue, 'compare': compareOperator}
-			 * ex: {relation: 'AND', query: [{'field': 'price', 'value': 10, 'compare': 'BEETWEEN'}, {'field': 'stock', 'value': 0, 'compare': '>'}]}
-			 * @param array filters It is an array of objects {relation: 'AND', query: filterObjectsArray}
-			 * @returns void
+			 *					array
+			 *						filterObjects object {'field': fieldName, 'value': fieldValue, 'compare': compareOperator}
+			 * 
+			 * ex: multiple filters [{'field': 'price', 'value': [10, 100], 'compare': 'BEETWEEN'}, {'field': 'stock', 'value': 0, 'compare': '>'}]
+			 * ex: single filter {'field': 'price', 'value': [10, 100], 'compare': 'BEETWEEN'}
+			 * 
+			 * @param {Array} filters
+			 * @param {String} relation Could be 'AND' || 'OR'
+			 * @returns {Boolean} Return true if the filter was added or False if it is not
 			 */
-			setNumericFilters: function( filters ) {
-				if( !filters ){
-					filters = [];
+			addNumericFilter: function( filters, relation  ) {
+				// If relation was not defined use AND by default
+				if ( !angular.isDefined(relation) ){
+					relation = 'AND';
+				}else if ( relation !== 'AND' && relation !== 'OR' ){
+					// If relation is not valid return false
+					return false;
 				}
-				this.filters.numericFilters = filters;
-			},
-			prepareNumericFilters: function(){
 				var _this = this;
-				if( angular.isArray( this.filters.numericFilters ) ){
-					var where = '';
-					var separator = ',';
-					// if numerics filters already exists the query should starts with ","(comma)
-					var querySeparator = ( angular.isDefined(this.options) && angular.isDefined(this.options.numericFilters) && this.options.numericFilters) ? ',' : '';
-					angular.forEach(this.filters.numericFilters, function(value, key) {
-						// If it is the first filter we would use the query separator
-						// after first filter all queries should have a ","(comma) as separator
-						where += (key === 0) ? querySeparator : separator;
-						// "OR" comparison should be closed by brackets, so open it here
-						if( angular.isDefined(value.relation) && value.relation === 'OR' ){
-							where += '(';
+				var filter = {};
+				filter[relation] = [];
+				// If it is a single filter convert it in an array to process it
+				if( !angular.isArray( filters ) ){
+					filters = [filters];
+				}
+				angular.forEach(filters, function(fieldObj, key) {
+					if( angular.isObject( fieldObj ) && angular.isDefined( fieldObj.field ) && angular.isDefined( fieldObj.value ) && angular.isDefined( fieldObj.compare ) ){
+						// Generate the query for algolia
+						var filterQuery = _this.makeNumericFilterQuery( fieldObj.field, fieldObj.value, fieldObj.compare );
+						if( filterQuery ){
+							// Insert the query in the array of queries
+							filter[relation].push( filterQuery );
 						}
-						if( angular.isDefined(value.query) && angular.isArray(value.query) ){
-							angular.forEach(value.query, function(queryValue, queryKey) {
-								// Don't add the separator if it is the first item in the query
-								if( queryKey > 0 ){
-									where += separator;
-								}
-								where += queryValue.field;
+					}
+				});
+				if( filter ){
+					// Insert the filter to the global filters
+					_this.numericFilters.push( filter );
+				}
+				return true;
+			},
+			/**
+			 * Build the string query for a numeric field in Algolia
+			 * @param {String} field
+			 * @param {Number} value
+			 * @param {string} compare
+			 * @returns {String}
+			 */
+			makeNumericFilterQuery: function(field, value, compare ) {
+				if ( !angular.isDefined(field) || !angular.isDefined(value) ){
+					return '';
+				}
 
-								if( angular.isDefined(queryValue.compare) ){
-									switch (queryValue.compare){
-										case 'BEETWEEN':
-											where += ':';
-											break;
-										default:
-											where += queryValue.compare;
-											break;
-									}
-								}
-								
-								if( angular.isArray(queryValue.value) ){
-									switch (queryValue.compare){
-										case 'BEETWEEN':
-											where += queryValue.value[0] + ' to ' + queryValue.value[1];
-											break;
-										default:
-											//use the first item to avoid errors if the : was not set as logical operator
-											where += queryValue.value[0];
-											break;
-									}
-								}else{
-									where += queryValue.value;
-								}
-							});
-						}
-						// "OR" comparison should be closed by brackets, so close it here
-						if( angular.isDefined(value.relation) && value.relation === 'OR' ){
-							where += ')';
-						}
+				// If it is empty compare use = (equal) as default
+				if( !angular.isDefined(compare) ){
+					compare = '=';
+				}
+				// if the compare is BEETWEEN we need to ensure that the value is an array of 2 positions, if it is not, return empty query
+				if( compare === 'BEETWEEN' && ( !angular.isArray(value) || value.length !== 2 ) ){
+					return '';
+				}
+				var filter = field;
+
+				switch (compare){
+					case 'BEETWEEN':
+						filter += ':';
+						break;
+					default:
+						filter += compare;
+						break;
+				}
+
+				if( compare === 'BEETWEEN' ){
+					filter += value[0] + ' to ' + value[1];
+				}else{
+					filter += value;
+				}
+				return filter;
+			},
+			
+			/**
+			 * Build numericFilters based on current filters
+			 * @returns {Array}
+			 */
+			_getNumericFilters: function(){
+				var _this = this;
+				var numericFilters = [];
+				if( angular.isArray( this.numericFilters ) ){
+					// Loop into the global array of filters
+					angular.forEach( this.numericFilters, function( numericFilterObject, key ) {
+						// Loop into the filters getting the array of filter objects and the relation
+						angular.forEach( numericFilterObject, function( filters, relation ) {
+							if( relation === 'OR' ){
+								// if relation value is "OR" just push the array of filters to generate an OR query in Algolia
+								numericFilters.push( filters );
+							}else if( relation === 'AND' ){
+								// if relation value is "AND" we need to insert the queries separately in the array of filters to generate an AND query in Algolia
+								angular.forEach( filters, function( filter, key ) {
+									numericFilters.push( filter );
+								});
+							}
+						});
 					});
 				}
-				if( where ){
-					this.options.numericFilters += where;
-				}
-				this.log(this.options.numericFilters);
+				this.log( numericFilters );
+				return numericFilters;
 			}
 		};
 
