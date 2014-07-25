@@ -87,7 +87,7 @@ app.factory('AlgoliaHelper', ['$q', '$rootScope', 'AlgoliaClient', 'MAConfig', f
 						this.options.hitsPerPage = options.hitsPerPage;
 					}
 				}
-				this.options.tagFilters = this.tagFilters;
+				this.options.tagFilters = this._getTagFilters();
 
 				this.options.numericFilters = this._getNumericFilters();
 
@@ -309,6 +309,81 @@ app.factory('AlgoliaHelper', ['$q', '$rootScope', 'AlgoliaClient', 'MAConfig', f
 				}
 				this.log(numericFilters);
 				return numericFilters;
+			},
+			/**
+			 * Clear tags filters
+			 * @returns {void}
+			 */
+			clearTagFilters: function() {
+				this.tagFilters = [];
+			},
+			/**
+			 * Add a tag filter to the array of filters
+			 * Filters format is
+			 *					array of filterValues  [ 'tag1', 'tag2', ..., 'tagN' ]
+			 * 
+			 * ex: multiple filters [ 'tag1', 'tag2', ..., 'tagN' ]
+			 * ex: single filter 'tag1'
+			 * 
+			 * @param {Array} filters
+			 * @param {String} relation Could be 'AND' || 'OR'
+			 * @returns {Boolean} Return true if the filter was added or False if it is not
+			 */
+			addTagFilter: function(filters, relation) {
+				// If relation was not defined use AND by default
+				if (!angular.isDefined(relation)) {
+					relation = 'AND';
+				} else if (relation !== 'AND' && relation !== 'OR') {
+					// If relation is not valid return false
+					return false;
+				}
+				var _this = this;
+				var filter = {};
+				filter[relation] = [];
+				// If it is a single filter convert it in an array to process it
+				if (!angular.isArray(filters)) {
+					filters = [filters];
+				}
+				console.log(filters);
+				angular.forEach(filters, function(value, key) {
+					if ( angular.isDefined( value ) && value ) {
+						// Insert the value in the array of queries
+						filter[relation].push( value );
+					}
+				});
+				console.log(filter);
+				if (filter) {
+					// Insert the filter to the global filters
+					_this.tagFilters.push(filter);
+				}
+				return true;
+			},
+			/**
+			 * Build tagFilters based on current filters
+			 * @returns {Array}
+			 */
+			_getTagFilters: function() {
+				var _this = this;
+				var tagFilters = [];
+				if (angular.isArray(this.tagFilters)) {
+					// Loop into the global array of filters
+					angular.forEach(this.tagFilters, function(tagFiltersArray, key) {
+						// Loop into the filters getting the array of filter objects and the relation
+						angular.forEach(tagFiltersArray, function(filters, relation) {
+							if (relation === 'OR') {
+								// if relation value is "OR" just push the array of filters to generate an OR query in Algolia
+								tagFilters.push(filters);
+							} else if (relation === 'AND') {
+								// if relation value is "AND" we need to insert the queries separately in the array of filters to generate an AND query in Algolia
+								angular.forEach(filters, function(filter, key) {
+									tagFilters.push(filter);
+								});
+							}
+						});
+					});
+				}
+				this.log(tagFilters);
+				return tagFilters;
 			}
 		};
 
