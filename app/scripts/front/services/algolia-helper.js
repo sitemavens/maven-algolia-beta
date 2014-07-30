@@ -7,12 +7,18 @@ app.factory('AlgoliaHelper', ['$q', '$rootScope', 'AlgoliaClient', 'MAConfig', f
 
 		var searchCallback = function(success, content) {
 			algoliaHelperInstance.log('AlgoliaHelper:searchCallback');
-
-			algoliaHelperInstance.page = content.page;
-			algoliaHelperInstance.nbPages = content.nbPages;
-			algoliaHelperInstance.hitsPerPage = content.hitsPerPage;
-			algoliaHelperInstance.nbHits = content.nbHits;
-			$rootScope.$broadcast('algoliaResultUpdated', content);
+			if( success ){
+				algoliaHelperInstance.page = content.page;
+				algoliaHelperInstance.nbPages = content.nbPages;
+				algoliaHelperInstance.hitsPerPage = content.hitsPerPage;
+				algoliaHelperInstance.nbHits = content.nbHits;
+				$rootScope.$broadcast('algoliaResultUpdated', content);
+			}else{
+				algoliaHelperInstance.log('AlgoliaHelper:searchCallback - Error');
+				algoliaHelperInstance.log(content);
+			}
+			algoliaHelperInstance.loadingEnd();
+			
 			if (!$rootScope.$$phase) {
 				$rootScope.$apply();
 			}
@@ -29,6 +35,7 @@ app.factory('AlgoliaHelper', ['$q', '$rootScope', 'AlgoliaClient', 'MAConfig', f
 			nbHits: 0,
 			numericFilters: [],
 			tagFilters: [],
+			loading: false,
 			options: {
 				hitsPerPage: 12,
 				facets: '',
@@ -62,6 +69,7 @@ app.factory('AlgoliaHelper', ['$q', '$rootScope', 'AlgoliaClient', 'MAConfig', f
 				return helper;
 			},
 			search: function(value, options) {
+				this.loadingStart();
 				this.log('AlgoliaHelper:Instance:search');
 				if (!value) {
 					value = '';
@@ -99,6 +107,18 @@ app.factory('AlgoliaHelper', ['$q', '$rootScope', 'AlgoliaClient', 'MAConfig', f
 				} else {
 					this.log('AlgoliaHelper:Instance:setIndex - Empty index was passed');
 				}
+			},
+			loadingStart: function() {
+				this.loading = true;
+				$rootScope.$broadcast('algHelperLoadingStarted', this.loading);
+			},
+			loadingEnd: function() {
+				this.loading = false;
+				
+				$rootScope.$broadcast('algHelperLoadingEnded', this.loading);
+			},
+			getLoadingValue: function() {
+				return this.loading;
 			},
 			sortByIndex: function(index, page) {
 				this.log('AlgoliaHelper:Instance:sortByIndex');
