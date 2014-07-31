@@ -123,6 +123,7 @@ app.factory('AlgoliaHelper', ['$q', '$rootScope', 'AlgoliaClient', 'MAConfig', f
 			sortByIndex: function(index, page) {
 				this.log('AlgoliaHelper:Instance:sortByIndex');
 				if (index) {
+					this.loadingStart();
 					var newPage = (page > 0) ? page : 0;
 					this.setIndex(index);
 					this.get().gotoPage(newPage);
@@ -364,14 +365,12 @@ app.factory('AlgoliaHelper', ['$q', '$rootScope', 'AlgoliaClient', 'MAConfig', f
 				if (!angular.isArray(filters)) {
 					filters = [filters];
 				}
-				console.log(filters);
 				angular.forEach(filters, function(value, key) {
 					if ( angular.isDefined( value ) && value ) {
 						// Insert the value in the array of queries
 						filter[relation].push( value );
 					}
 				});
-				console.log(filter);
 				if (filter) {
 					// Insert the filter to the global filters
 					_this.tagFilters.push(filter);
