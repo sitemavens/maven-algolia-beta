@@ -24,7 +24,7 @@ class Main {
 		
 		//TODO: Esto hay que quitarlo, quizas agregarle un filtro para que solo se levante en paginas 
 		// que sea necesario.
-		if ( is_page( 'browse' ) ) {
+		if ( is_page( 'browse' ) || is_tax( 'mvnb_category' )) {
 
 			if ( $registry->isDevEnv() ) {
 				wp_enqueue_script( 'angular', $registry->getBowerComponentUrl() . "angular/angular.js", array('jquery','jquery-ui-core'), $registry->getPluginVersion() );
@@ -48,7 +48,7 @@ class Main {
 //				wp_enqueue_style( 'main', $registry->getStylesUrl() . "main.css", array( 'bootstrap', 'bootstrap-theme' ), $registry->getPluginVersion() );
 			} else {
 				wp_enqueue_script( 'mavenAlgoliaApp', $registry->getScriptsUrl() . "main.min.js", 'angular', $registry->getPluginVersion() );
-				wp_enqueue_style( 'mainCss', $registry->getStylesUrl() . "main.min.css", array(), $registry->getPluginVersion() );
+				//wp_enqueue_style( 'mainCss', $registry->getStylesUrl() . "main.min.css", array(), $registry->getPluginVersion() );
 			}
 
 			wp_localize_script( 'mavenAlgoliaApp', 'MASearchConfig', array(
