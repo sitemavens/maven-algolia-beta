@@ -24,7 +24,7 @@ class Main {
 		
 		//TODO: Esto hay que quitarlo, quizas agregarle un filtro para que solo se levante en paginas 
 		// que sea necesario.
-		if ( is_page( array( 'browse', 'gifts' ) ) || is_tax( 'mvnb_category' )) {
+		if ( is_page( array( 'browse', 'gifts' ) ) || is_tax( 'mvnb_category' ) || is_tax( 'mvnb_author' ) ) {
 
 			if ( $registry->isDevEnv() ) {
 				wp_enqueue_script( 'angular', $registry->getBowerComponentUrl() . "angular/angular.js", array('jquery','jquery-ui-core'), $registry->getPluginVersion() );
