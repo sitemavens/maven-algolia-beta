@@ -1,5 +1,5 @@
 
-angular.module('phBrowse', [
+angular.module('phApp', [
 	'ngCookies',
 	'ngResource',
 	'ngSanitize',
